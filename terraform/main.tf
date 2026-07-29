@@ -53,6 +53,73 @@
 
 
 
+# ###############################################################
+# # HC_LANDING
+# ###############################################################
+
+# module "hc_landing" {
+#   source = "./HC_LANDING"
+
+#   providers = {
+#     snowflake = snowflake
+#   }
+
+#   database = var.database
+#   schema   = var.schema
+# }
+
+# ###############################################################
+# # HC_RAW
+# ###############################################################
+
+# module "hc_raw" {
+
+#   source = "./HC_RAW"
+
+#   providers = {
+#     snowflake = snowflake
+#   }
+
+#   database = var.database
+#   schema   = var.schema
+# }
+
+# ###############################################################
+# # HC_FUSION
+# ###############################################################
+
+# module "hc_fusion" {
+
+#   source = "./HC_FUSION"
+
+#   providers = {
+#     snowflake = snowflake
+#   }
+
+#   database = var.database
+#   schema   = var.schema
+# }
+
+# ###############################################################
+# # HC_CONSUMPTION
+# ###############################################################
+
+# module "hc_consumption" {
+
+#   source = "./HC_CONSUMPTION"
+
+#   providers = {
+#     snowflake = snowflake
+#   }
+
+#   database = var.database
+#   schema   = var.schema
+# }
+
+
+
+
+
 ###############################################################
 # HC_LANDING
 ###############################################################
@@ -64,8 +131,8 @@ module "hc_landing" {
     snowflake = snowflake
   }
 
-  database = var.database
-  schema   = var.schema
+  database = "HC_LANDING"
+  schema   = "PUBLIC"
 }
 
 ###############################################################
@@ -73,15 +140,14 @@ module "hc_landing" {
 ###############################################################
 
 module "hc_raw" {
-
   source = "./HC_RAW"
 
   providers = {
     snowflake = snowflake
   }
 
-  database = var.database
-  schema   = var.schema
+  database = "HC_RAW"
+  schema   = "PUBLIC"
 }
 
 ###############################################################
@@ -89,15 +155,14 @@ module "hc_raw" {
 ###############################################################
 
 module "hc_fusion" {
-
   source = "./HC_FUSION"
 
   providers = {
     snowflake = snowflake
   }
 
-  database = var.database
-  schema   = var.schema
+  database = "HC_FUSION"
+  schema   = "PUBLIC"
 }
 
 ###############################################################
@@ -105,18 +170,12 @@ module "hc_fusion" {
 ###############################################################
 
 module "hc_consumption" {
-
   source = "./HC_CONSUMPTION"
 
   providers = {
     snowflake = snowflake
   }
 
-  database = var.database
-  schema   = var.schema
+  database = "HC_CONSUMPTION"
+  schema   = "PUBLIC"
 }
-
-
-
-
-
