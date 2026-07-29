@@ -70,13 +70,13 @@ jobs:
       DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
       DBT_TARGET: dev
 
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_ACCOUNT: 'RZ63409'
+      SNOWFLAKE_USER: 'TF_CICD_SVC'
+      SNOWFLAKE_ROLE: 'TF_CICD_ROLE'
+      SNOWFLAKE_WAREHOUSE: 'COMPUTE_WH'
 
-      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.rsa_key }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: 'MyStrongPassword690!'
 
       DBT_LANDING_DB: DEV_HC_LANDING
       DBT_RAW_DB: DEV_HC_RAW
@@ -104,7 +104,7 @@ jobs:
         shell: bash
         run: |
           cat <<'EOF' > sf_private_key.pem
-          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          ${{ secrets.rsa_key }}
           EOF
           chmod 600 sf_private_key.pem
           echo "SNOWFLAKE_PRIVATE_KEY_PATH=$(pwd)/sf_private_key.pem" >> $GITHUB_ENV
@@ -169,13 +169,13 @@ jobs:
       DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
       DBT_TARGET: dev
 
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_ACCOUNT: 'RZ63409'
+      SNOWFLAKE_USER: 'TF_CICD_SVC'
+      SNOWFLAKE_ROLE: 'TF_CICD_ROLE'
+      SNOWFLAKE_WAREHOUSE: 'COMPUTE_WH'
 
-      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.rsa_key }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: 'MyStrongPassword690!'
 
       DBT_LANDING_DB: DEV_HC_LANDING
       DBT_RAW_DB: DEV_HC_RAW
@@ -207,7 +207,7 @@ jobs:
         shell: bash
         run: |
           cat <<'EOF' > sf_private_key.pem
-          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          ${{ secrets.rsa_key }}
           EOF
           chmod 600 sf_private_key.pem
           echo "SNOWFLAKE_PRIVATE_KEY_PATH=$(pwd)/sf_private_key.pem" >> $GITHUB_ENV

@@ -138,12 +138,13 @@ jobs:
       DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
       DBT_TARGET: ${{ needs.resolve-environment.outputs.environment }}
       ENV_UPPER: ${{ needs.resolve-environment.outputs.environment }}
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
-      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+
+      SNOWFLAKE_ACCOUNT: 'RZ63409'
+      SNOWFLAKE_USER: 'TF_CICD_SVC'
+      SNOWFLAKE_ROLE: 'TF_CICD_ROLE'
+      SNOWFLAKE_WAREHOUSE: 'COMPUTE_WH'
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.rsa_key }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: 'MyStrongPassword690!'
     steps:
       - uses: actions/checkout@v4
 
@@ -175,7 +176,7 @@ jobs:
         shell: bash
         run: |
           cat <<'EOF' > sf_private_key.pem
-          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          ${{ secrets.rsa_key }}
           EOF
           chmod 600 sf_private_key.pem
           echo "SNOWFLAKE_PRIVATE_KEY_PATH=$(pwd)/sf_private_key.pem" >> "$GITHUB_ENV"
