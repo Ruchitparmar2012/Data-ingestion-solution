@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: STANDARDIZED_HCHB
+    database: HC_FUSION
+    schema: STANDARDIZED 
+    tables:
+      - name: TBL_DIM_BRANCH_HCHB
+        identifier: TBL_DIM_BRANCH_HCHB
+          

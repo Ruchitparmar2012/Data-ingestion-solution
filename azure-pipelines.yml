@@ -1,0 +1,178 @@
+# ============================================================
+# Azure DevOps Pipeline — HCHB Platform (Terraform + dbt + Snowflake)
+# ------------------------------------------------------------
+# Mirrors the GitHub Actions setup in .github/workflows/:
+#   PR into develop/main        -> lint + validate only, no deploy
+#   push to develop             -> deploy to DEV
+#   push to main                -> deploy to STAGING
+#   manual run (any branch)     -> choose environment, incl. PROD
+#
+# PROD deploys are gated by an Azure DevOps "Environment" named
+# `prod` — configure required approvers under
+# Pipelines > Environments > prod > Approvals and checks.
+#
+# Required variable groups (Pipelines > Library), linked to Azure
+# Key Vault where possible:
+#   hchb-snowflake-common   (SNOWFLAKE_ORG, SNOWFLAKE_ACCOUNT, SNOWFLAKE_USER,
+#                            SNOWFLAKE_ROLE, SNOWFLAKE_WAREHOUSE,
+#                            SNOWFLAKE_PRIVATE_KEY, SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+#   hchb-azure-backend      (ARM_CLIENT_ID, ARM_CLIENT_SECRET,
+#                            ARM_SUBSCRIPTION_ID, ARM_TENANT_ID)
+# ============================================================
+
+trigger:
+  branches:
+    include: [main, develop]
+  paths:
+    include:
+      - dbt/*
+      - terraform/*
+      - azure-pipelines.yml
+      - azure-pipelines/*
+
+pr:
+  branches:
+    include: [main, develop]
+
+parameters:
+  - name: environment
+    displayName: "Target environment (manual runs only)"
+    type: string
+    default: dev
+    values: [dev, staging, prod]
+  - name: runTerraform
+    displayName: "Apply Terraform changes?"
+    type: boolean
+    default: true
+
+variables:
+  - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+      - name: deployEnvironment
+        value: dev
+  - ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      - name: deployEnvironment
+        value: staging
+  - ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/develop') }}:
+      - name: deployEnvironment
+        value: dev
+  - ${{ else }}:
+      - name: deployEnvironment
+        value: ${{ parameters.environment }}
+
+stages:
+
+  # ================================================================
+  # STAGE 1 — Lint & validate (always runs, safe for PRs)
+  # ================================================================
+  - stage: Lint
+    displayName: "Lint & Validate"
+    jobs:
+      - job: TerraformLint
+        displayName: "Terraform fmt & validate"
+        pool: { vmImage: "ubuntu-latest" }
+        steps:
+          - task: TerraformInstaller@1
+            inputs: { terraformVersion: "1.9.8" }
+          - script: terraform fmt -check -recursive
+            workingDirectory: terraform
+          - script: terraform init -backend=false
+            workingDirectory: terraform
+          - script: terraform validate
+            workingDirectory: terraform
+
+      - job: SqlLint
+        displayName: "SQLFluff lint"
+        pool: { vmImage: "ubuntu-latest" }
+        steps:
+          - task: UsePythonVersion@0
+            inputs: { versionSpec: "3.12" }
+          - script: pip install -r dbt/requirements.txt
+          - script: dbt deps
+            workingDirectory: dbt
+          - script: sqlfluff lint dbt/models --nofail
+
+  # ================================================================
+  # STAGE 2 — dbt compile/test against DEV (quality gate for PRs)
+  # ================================================================
+  - stage: Validate
+    displayName: "dbt Compile & Test (dev)"
+    dependsOn: Lint
+    variables:
+      - group: hchb-snowflake-common
+    jobs:
+      - job: DbtCompile
+        displayName: "dbt debug, parse, compile"
+        pool: { vmImage: "ubuntu-latest" }
+        steps:
+          - task: UsePythonVersion@0
+            inputs: { versionSpec: "3.12" }
+          - script: |
+              echo "$(SNOWFLAKE_PRIVATE_KEY)" > $(Pipeline.Workspace)/sf_private_key.pem
+              chmod 600 $(Pipeline.Workspace)/sf_private_key.pem
+              echo "##vso[task.setvariable variable=SNOWFLAKE_PRIVATE_KEY_PATH]$(Pipeline.Workspace)/sf_private_key.pem"
+            displayName: "Materialize Snowflake private key"
+          - script: pip install -r dbt/requirements.txt
+          - script: dbt deps
+            workingDirectory: dbt
+          - script: dbt debug
+            workingDirectory: dbt
+            env:
+              DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+              DBT_TARGET: dev
+              SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+              SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+              SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+              SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+              SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+              SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+          - script: dbt compile
+            workingDirectory: dbt
+            env:
+              DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+              DBT_TARGET: dev
+              SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+              SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+              SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+              SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+              SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+              SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+
+  # ================================================================
+  # STAGE 3 — Deploy (skipped entirely for PR runs)
+  # ================================================================
+  - stage: Deploy
+    displayName: "Deploy — $(deployEnvironment)"
+    dependsOn: Validate
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    variables:
+      - group: hchb-snowflake-common
+      - group: hchb-azure-backend
+    jobs:
+      - deployment: TerraformApply
+        displayName: "Terraform apply"
+        pool: { vmImage: "ubuntu-latest" }
+        environment: $(deployEnvironment)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: azure-pipelines/templates/terraform-steps.yml
+                  parameters:
+                    environment: $(deployEnvironment)
+                    applyChanges: ${{ parameters.runTerraform }}
+
+      - deployment: DbtBuild
+        displayName: "dbt build, test, docs"
+        pool: { vmImage: "ubuntu-latest" }
+        environment: $(deployEnvironment)
+        dependsOn: TerraformApply
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: azure-pipelines/templates/dbt-steps.yml
+                  parameters:
+                    environment: $(deployEnvironment)
+                    testOnly: false

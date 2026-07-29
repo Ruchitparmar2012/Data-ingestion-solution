@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: STG_SILVER_HCHB
+    database: HC_FUSION
+    schema: STG_SILVER
+    tables:
+      - name: HCHB_BRANCHES_CLEANSED
+        identifier: HCHB_BRANCHES_CLEANSED
+          

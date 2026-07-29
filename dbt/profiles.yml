@@ -1,0 +1,101 @@
+hchb_platform:
+  target: dev_snowflake
+
+  outputs:
+
+    # ==========================================================
+    # DEVELOPMENT
+    # ==========================================================
+    dev_snowflake:
+      type: snowflake
+
+      account: ex52281.east-us.azure
+      user: TF_CICD_SVC
+      role: TF_CICD_ROLE
+      warehouse: COMPUTE_WH
+
+      database: HC_RAW
+      schema: HCHB
+
+      threads: 4
+
+      authenticator: SNOWFLAKE_JWT
+
+      private_key_path: "C:/Users/ruchit.parmar/Desktop/snowflake-platform/rsa_key.p8"
+      private_key_passphrase: "MyStrongPassword690!"
+
+      client_session_keep_alive: false
+
+    # # ==========================================================
+    # # UAT
+    # # ==========================================================
+    # uat_snowflake:
+    #   type: snowflake
+
+    #   account: ex52281.east-us.azure
+    #   user: TF_CICD_SVC
+    #   role: TF_CICD_ROLE
+    #   warehouse: COMPUTE_WH
+
+    #   database: HC_RAW
+    #   schema: HCHB
+
+    #   threads: 4
+
+    #   authenticator: SNOWFLAKE_JWT
+
+    #   private_key_path: "C:/Users/ruchit.parmar/Desktop/snowflake-platform/rsa_key.p8"
+    #   private_key_passphrase: "MyStrongPassword690!"
+
+    #   client_session_keep_alive: false
+
+    # # ==========================================================
+    # # PRODUCTION
+    # # ==========================================================
+    prod_snowflake:
+      type: snowflake
+
+      account: ex52281.east-us.azure
+      user: TF_CICD_SVC
+      role: TF_CICD_ROLE
+      warehouse: COMPUTE_WH
+
+      database: HC_RAW
+      schema: HCHB
+
+      threads: 10
+
+      authenticator: SNOWFLAKE_JWT
+
+      private_key_path: "C:/Users/ruchit.parmar/Desktop/snowflake-platform/rsa_key.p8"
+      private_key_passphrase: "MyStrongPassword690!"
+
+      client_session_keep_alive: false
+
+
+
+
+
+# hchb_platform:
+#   target: dev_snowflake
+
+#   outputs:
+#   dev_snowflake:
+#     type: snowflake
+
+#     account: ex52281.east-us.azure
+#     user: TF_CICD_SVC
+#     role: TF_CICD_ROLE
+#     warehouse: COMPUTE_WH
+
+#     database: HC_RAW
+#     schema: HCHB
+
+#     threads: 4
+
+#     authenticator: SNOWFLAKE_JWT
+
+#     private_key_path: "C:/Users/ruchit.parmar/Desktop/snowflake-platform/rsa_key.p8"
+#     private_key_passphrase: "MyStrongPassword690!"
+
+#     client_session_keep_alive: false

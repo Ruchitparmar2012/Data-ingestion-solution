@@ -1,0 +1,29 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Terraform variable files
+terraform.tfvars
+*.auto.tfvars
+
+# Snowflake RSA Keys
+*.p8
+*.pem
+*.key
+rsa_key.pub
+
+# Environment files
+.env
+
+# Terraform plan files
+*.tfplan
+tfplan
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

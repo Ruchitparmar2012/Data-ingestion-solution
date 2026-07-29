@@ -1,0 +1,120 @@
+name: 'hchb_platform'
+version: '1.0.0'
+profile: 'hchb_platform'
+
+model-paths:    ["models"]
+analysis-paths: ["analyses"]
+test-paths:     ["tests"]
+seed-paths:     ["seeds"]
+macro-paths:    ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  MODEL CONFIGURATION
+#  LOCAL MODE: no Terraform / no env vars set → defaults below are used as-is.
+#  These defaults now match the actual databases you created manually in
+#  Snowflake: HC_LANDING, HC_RAW, HC_FUSION, HC_CONSUMPTION
+# ─────────────────────────────────────────────────────────────────────────────
+models:
+  hchb_platform:
+
+    # ── LANDING LAYER ────────────────────────────────────────────────────────
+    # landing:
+    #   +database:     "{{ env_var('DBT_LANDING_DB', 'HC_LANDING') }}"
+    #   +materialized: view
+    #   +data_retention_time_in_days: 7
+    #   +tags: ['LANDING']
+    #   hchb:
+    #     +schema: HCHB
+    #     +tags: ['HCHB']
+
+    # ── RAW LAYER ────────────────────────────────────────────────────────────
+    raw:
+      +database:     "{{ env_var('DBT_RAW_DB', 'HC_RAW') }}"
+      +materialized: incremental
+      +incremental_strategy: merge
+      +data_retention_time_in_days: 7
+      +tags: ['RAW']
+      hchb:
+        +schema: HCHB
+        +tags: ['HCHB']
+      ecw:
+        +schema: ECW
+        +tags: ['ECW']
+      wellsky:
+        +schema: WELLSKY
+        +tags: ['WELLSKY']
+
+    # ── FUSION LAYER ─────────────────────────────────────────────────────────
+    fusion:
+      +database:     "{{ env_var('DBT_FUSION_DB', 'HC_FUSION') }}"
+      +data_retention_time_in_days: 14
+
+      stg_silver:
+        +schema: STG_SILVER
+        +materialized: incremental
+        +incremental_strategy: merge
+        +tags: ['STG_SILVER', 'CLEANSED']
+        hchb:
+          +tags: ['HCHB']
+
+      silver:
+        +schema: SILVER
+        +materialized: incremental
+        +incremental_strategy: merge
+        +data_retention_time_in_days: 14
+        +tags: ['SILVER']
+        hchb:
+          +tags: ['HCHB']
+        ecw:
+          +tags: ['ECW']
+        wellsky:
+          +tags: ['WELLSKY']
+
+      standardized:
+        +schema: STANDARDIZED
+        +materialized: incremental
+        +incremental_strategy: merge
+        +tags: ['STANDARDIZED']
+
+      integration:
+        +schema: INTEGRATION
+        +materialized: table
+        +tags: ['INTEGRATION']
+
+    # ── CONSUMPTION LAYER ────────────────────────────────────────────────────
+    consumption:
+      +database:     "{{ env_var('DBT_CONSUMPTION_DB', 'HC_CONSUMPTION') }}"
+      +data_retention_time_in_days: 30
+
+      gold:
+        +schema: GOLD
+        +materialized: incremental
+        +incremental_strategy: insert_overwrite
+        +tags: ['GOLD', 'REPORT']
+
+      ai_ml:
+        +schema: AI_ML
+        +materialized: table
+        +tags: ['AI_ML']
+
+      marts:
+        +schema: MARTS
+        +materialized: table
+        +tags: ['MARTS']
+
+seeds:
+  hchb_platform:
+    config:
+      +database: "{{ env_var('DBT_FUSION_DB', 'HC_FUSION') }}"
+      +schema: STG_SILVER
+
+# on-run-end hook removed for local runs — log_dbt_results() likely lives in a
+# macro that assumes a logging table/warehouse that may not exist locally yet.
+# Re-enable once that macro/table is confirmed to exist in your local target.
+# on-run-end:
+#   - "{{ log_dbt_results(results) }}"

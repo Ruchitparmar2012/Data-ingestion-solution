@@ -1,0 +1,100 @@
+version: 2
+
+sources:
+  - name: HC_RAW_HCHB
+    database: HC_RAW
+    schema: HCHB
+    description: "Raw HCHB Bronze tables written by hchb_v12.py generator."
+    tables:
+    # - name: ACCOUNTABLE_CARE_ORGANIZATIONS
+    # - name: AC_FACILITIES
+    # - name: AC_PHYSICIANOFFICES
+    # - name: AC_PHYSICIAN_OFFICES
+    # - name: ADMISSION_COORDINATORS
+    # - name: ALLERGIES
+    - name: BRANCHES
+    # - name: CARETEAM_MEMBERS
+    # - name: CARE_TEAM_MEMBERS
+    # - name: CARE_TYPES
+    # - name: CLIENTS_ALL
+    # - name: CLIENT_ACOS
+    # - name: CLIENT_ADDRESS
+    # - name: CLIENT_CONTACTS
+    # - name: CLIENT_CONTACT_TYPES
+    # - name: CLIENT_DIAGNOSES_AND_PROCEDURES
+    # - name: CLIENT_EPISODES_ALL
+    # - name: CLIENT_EPISODE_ALLERGIES
+    # - name: CLIENT_EPISODE_BRANCH_HISTORY
+    # - name: CLIENT_EPISODE_CARE_TYPES
+    # - name: CLIENT_EPISODE_CASE_MANAGERS
+    # - name: CLIENT_EPISODE_CLAIM_MEDICATIONS
+    # - name: CLIENT_EPISODE_CONTACTS
+    # - name: CLIENT_EPISODE_DATE_OF_DEATH
+    # - name: CLIENT_EPISODE_EMERGENCY_PREP
+    # - name: CLIENT_EPISODE_FLAGS
+    # - name: CLIENT_EPISODE_FS
+    # - name: CLIENT_EPISODE_FS_EMPLOYER_INFO
+    # - name: CLIENT_EPISODE_RELATED_FACILITIES
+    # - name: CLIENT_EPISODE_SERVICE_LOCATIONS
+    # - name: CLIENT_EPISODE_VISITS_ALL
+    # - name: CLIENT_EPISODE_VISIT_ASSESSITEMS
+    # - name: CLIENT_EPISODE_VISIT_ASSESSITEMS_ANSWERS
+    # - name: CLIENT_EPISODE_VISIT_ASSESS_ITEMS_ANSWERS
+    # - name: CLIENT_EPISODE_VISIT_ENCOUNTERS
+    # - name: CLIENT_EPISODE_VISIT_NOTES
+    # - name: CLIENT_EPISODE_VISIT_VS_READINGS
+    # - name: CLIENT_EPISODE_VISIT_VS_SUBREADINGS
+    # - name: CLIENT_IDG_MEETING_DETAILS
+    # - name: CLIENT_IDG_WORKERS
+    # - name: CLIENT_LOG
+    # - name: CLIENT_MEDS
+    # - name: CLIENT_ORDERS_ALL
+    # - name: CLIENT_ORDER_HISTORY
+    # - name: CLIENT_ORDER_LEVELS_OF_CARE
+    # - name: CLIENT_PATIENT_PROGRAMS
+    # - name: CLIENT_SCHED_VISITS
+    # - name: DC_REASONS
+    # - name: DIAGNOSIS_AND_PROCEDURE_PRIMARYFLAG_TYPES
+    # - name: DNR_TYPES
+    - name: FACILITIES
+    # - name: HV_CLINICAL_INPUT
+    # - name: JOB_DESCRIPTIONS
+    # - name: LANGUAGES
+    # - name: LOGIN_PROFILES
+    # - name: MARITAL_STATUSES
+    # - name: MEDICATIONS
+    # - name: MEDICATION_STATUSES
+    # - name: MED_CLASSIFICATIONS
+    # - name: NONADMIT_REASONS
+    # - name: NON_VISIT_TIME
+    # - name: NON_VISIT_TIME_TYPES
+    # - name: NOTE_TYPE
+    # - name: PATIENT_MEDS
+    # - name: PATIENT_MED_ATTRIBUTES
+    # - name: PAYOR_SOURCES
+    # - name: PAYOR_SOURCE_VERIFICATIONS
+    # - name: PAYOR_TYPES
+    # - name: PHARMACY
+    # - name: PHYSICIANS
+    # - name: PHYSICIAN_GROUPS
+    # - name: PHYSICIAN_OFFICES
+    # - name: RACES
+    # - name: REFERRAL_SOURCES
+    # - name: REFERRING_FACILITY_TYPES
+    # - name: RELATIONSHIPS
+    # - name: RELIGIONS
+    # - name: SALES_TEAMS
+    # - name: SALES_TEAM_ACS
+    # - name: SCHED
+    # - name: SERVICECODES
+    # - name: SERVICES
+    # - name: SERVICE_CODES
+    # - name: SERVICE_LINES
+    # - name: SERVICE_LOCATION_TYPES
+    # - name: TIME_SLIPS
+    # - name: VISIT_MISSED_REASONS
+    # - name: VISITMISSED_REASONS
+    # - name: VITALSIGN_TYPES
+    # - name: WORKER_BASE
+    # - name: ZIPCODES
+          

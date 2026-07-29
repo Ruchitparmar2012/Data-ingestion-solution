@@ -1,0 +1,150 @@
+name: HealthNexus Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: DEV
+        type: choice
+        options: [DEV, PROD]
+      run_layers:
+        description: dbt layers (ALL or RAW,STG_SILVER,SILVER,STANDARDIZED,GOLD)
+        required: true
+        default: ALL
+      run_terraform:
+        description: Run Terraform?
+        required: false
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+      generator_mode:
+        description: Generator mode
+        required: false
+        default: skip
+        type: choice
+        options: [skip, full, incremental, append]
+      patient_count:
+        description: Number of patients
+        required: false
+        default: '200'
+      confirm_prod:
+        description: Type DEPLOY to confirm PROD
+        required: false
+        default: ''
+
+jobs:
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PROD confirmation
+        run: |
+          ENV="${{ github.event.inputs.environment }}"
+          CONFIRM="${{ github.event.inputs.confirm_prod }}"
+          if [ "$ENV" = "PROD" ] && [ "$CONFIRM" != "DEPLOY" ]; then
+            echo "ERROR: PROD requires confirm_prod = DEPLOY"
+            exit 1
+          fi
+          echo "OK: $ENV"
+
+  terraform:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ github.event.inputs.run_terraform == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > sf_private_key.pem
+          chmod 600 sf_private_key.pem
+      - name: Terraform apply
+        env:
+          TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
+        run: |
+          cd terraform/environments/prod
+          terraform init
+          terraform apply -auto-approve \
+            -var="environment=${{ github.event.inputs.environment }}" \
+            -var="snowflake_private_key_path=${{ github.workspace }}/sf_private_key.pem"
+
+  generator:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ github.event.inputs.generator_mode != 'skip' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install snowflake-connector-python faker
+      - name: Patch credentials and run generator
+        working-directory: generator
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment }}
+          PATIENT_COUNT: ${{ github.event.inputs.patient_count }}
+          GENERATOR_MODE: ${{ github.event.inputs.generator_mode }}
+        run: python3 patch_and_run.py
+
+  dbt_transform:
+    runs-on: ubuntu-latest
+    needs: [validate, generator]
+    if: always() && needs.validate.result == 'success'
+    env:
+      DBT_PROFILES_DIR:          ${{ github.workspace }}/dbt
+      DBT_SNOWFLAKE_ACCOUNT:     ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      DBT_SNOWFLAKE_USER:        ${{ secrets.SNOWFLAKE_USER }}
+      DBT_SNOWFLAKE_ROLE:        ${{ secrets.SNOWFLAKE_ROLE }}
+      DBT_SNOWFLAKE_WAREHOUSE:   ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      DBT_SNOWFLAKE_PRIVATE_KEY: ${{ github.workspace }}/sf_private_key.pem
+      DBT_LANDING_DB:            ${{ github.event.inputs.environment }}_HC_LANDING
+      DBT_RAW_DB:                ${{ github.event.inputs.environment }}_HC_RAW
+      DBT_FUSION_DB:             ${{ github.event.inputs.environment }}_HC_FUSION
+      DBT_CONSUMPTION_DB:        ${{ github.event.inputs.environment }}_HC_CONSUMPTION
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > sf_private_key.pem
+          chmod 600 sf_private_key.pem
+      - name: Install dbt
+        run: pip install -r requirements.txt
+      - name: dbt deps
+        working-directory: dbt
+        run: dbt deps
+      - name: dbt run RAW
+        if: contains(github.event.inputs.run_layers, 'RAW') || github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: |
+          dbt run --select tag:RAW \
+            --exclude raw_hchb_CLIENT_EPISODE_FS_EMPLOYER_INFO \
+            --no-partial-parse
+      - name: dbt run STG_SILVER
+        if: contains(github.event.inputs.run_layers, 'STG_SILVER') || github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: dbt run --select tag:STG_SILVER
+      - name: dbt run SILVER
+        if: contains(github.event.inputs.run_layers, 'SILVER') || github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: dbt run --select tag:SILVER
+      - name: dbt run STANDARDIZED
+        if: contains(github.event.inputs.run_layers, 'STANDARDIZED') || github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: dbt run --select tag:STANDARDIZED
+      - name: dbt run GOLD
+        if: contains(github.event.inputs.run_layers, 'GOLD') || github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: dbt run --select tag:GOLD
+      - name: dbt test
+        if: github.event.inputs.run_layers == 'ALL'
+        working-directory: dbt
+        run: dbt test --select tag:GOLD tag:SILVER tag:RAW || true

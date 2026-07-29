@@ -1,0 +1,126 @@
+# ============================================================
+# Reusable dbt steps template.
+# Params:
+#   environment: dev | staging | prod
+#   testOnly:    if true, only runs `dbt test` (used for PR validation)
+# ============================================================
+parameters:
+  - name: environment
+    type: string
+  - name: testOnly
+    type: boolean
+    default: false
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.12"
+    displayName: "Use Python 3.12"
+
+  - script: |
+      ENV_UPPER=$(echo "${{ parameters.environment }}" | tr '[:lower:]' '[:upper:]')
+      echo "##vso[task.setvariable variable=DBT_LANDING_DB]${ENV_UPPER}_HC_LANDING"
+      echo "##vso[task.setvariable variable=DBT_RAW_DB]${ENV_UPPER}_HC_RAW"
+      echo "##vso[task.setvariable variable=DBT_FUSION_DB]${ENV_UPPER}_HC_FUSION"
+      echo "##vso[task.setvariable variable=DBT_CONSUMPTION_DB]${ENV_UPPER}_HC_CONSUMPTION"
+    displayName: "Derive environment database names"
+
+  - script: pip install -r dbt/requirements.txt
+    displayName: "Install dbt + dependencies"
+
+  - script: |
+      echo "$(SNOWFLAKE_PRIVATE_KEY)" > $(Pipeline.Workspace)/sf_private_key.pem
+      chmod 600 $(Pipeline.Workspace)/sf_private_key.pem
+      echo "##vso[task.setvariable variable=SNOWFLAKE_PRIVATE_KEY_PATH]$(Pipeline.Workspace)/sf_private_key.pem"
+    displayName: "Materialize Snowflake private key"
+    env:
+      SNOWFLAKE_PRIVATE_KEY: $(SNOWFLAKE_PRIVATE_KEY)
+
+  - script: dbt deps
+    workingDirectory: dbt
+    displayName: "dbt deps"
+    env:
+      DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+      DBT_TARGET: ${{ parameters.environment }}
+
+  - ${{ if eq(parameters.testOnly, false) }}:
+      - script: dbt seed
+        workingDirectory: dbt
+        displayName: "dbt seed"
+        env:
+          DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+          DBT_TARGET: ${{ parameters.environment }}
+          SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+          SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+          SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+          SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+          SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+          DBT_LANDING_DB: $(DBT_LANDING_DB)
+          DBT_RAW_DB: $(DBT_RAW_DB)
+          DBT_FUSION_DB: $(DBT_FUSION_DB)
+          DBT_CONSUMPTION_DB: $(DBT_CONSUMPTION_DB)
+
+      - script: |
+          for LAYER in RAW STG_SILVER SILVER STANDARDIZED GOLD; do
+            echo "=== dbt run --select tag:$LAYER ==="
+            dbt run --select tag:$LAYER
+          done
+        workingDirectory: dbt
+        displayName: "dbt run (all layers)"
+        env:
+          DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+          DBT_TARGET: ${{ parameters.environment }}
+          SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+          SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+          SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+          SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+          SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+          DBT_LANDING_DB: $(DBT_LANDING_DB)
+          DBT_RAW_DB: $(DBT_RAW_DB)
+          DBT_FUSION_DB: $(DBT_FUSION_DB)
+          DBT_CONSUMPTION_DB: $(DBT_CONSUMPTION_DB)
+
+  - script: dbt test
+    workingDirectory: dbt
+    displayName: "dbt test"
+    env:
+      DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+      DBT_TARGET: ${{ parameters.environment }}
+      SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+      SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+      SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+      SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+      SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+      DBT_LANDING_DB: $(DBT_LANDING_DB)
+      DBT_RAW_DB: $(DBT_RAW_DB)
+      DBT_FUSION_DB: $(DBT_FUSION_DB)
+      DBT_CONSUMPTION_DB: $(DBT_CONSUMPTION_DB)
+
+  - ${{ if eq(parameters.testOnly, false) }}:
+      - script: dbt docs generate
+        workingDirectory: dbt
+        displayName: "dbt docs generate"
+        env:
+          DBT_PROFILES_DIR: $(System.DefaultWorkingDirectory)/dbt
+          DBT_TARGET: ${{ parameters.environment }}
+          SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+          SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+          SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+          SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+          SNOWFLAKE_PRIVATE_KEY_PATH: $(SNOWFLAKE_PRIVATE_KEY_PATH)
+          SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: $(SNOWFLAKE_PRIVATE_KEY_PASSPHRASE)
+          DBT_LANDING_DB: $(DBT_LANDING_DB)
+          DBT_RAW_DB: $(DBT_RAW_DB)
+          DBT_FUSION_DB: $(DBT_FUSION_DB)
+          DBT_CONSUMPTION_DB: $(DBT_CONSUMPTION_DB)
+
+      - publish: dbt/target
+        artifact: dbt-docs-${{ parameters.environment }}
+        displayName: "Publish dbt docs artifact"
+
+  - script: rm -f $(Pipeline.Workspace)/sf_private_key.pem
+    displayName: "Clean up private key"
+    condition: always()

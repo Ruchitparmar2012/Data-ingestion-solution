@@ -1,0 +1,76 @@
+{{ config(
+    database="HC_RAW",
+    schema="HCHB",
+    alias="FACILITIES",
+    materialized="incremental",
+    unique_key="FA_ID",
+    incremental_strategy="merge",
+    tags=["RAW", "HCHB"]
+) }}
+
+SELECT
+    FA_ID,
+    FA_NAME,
+    FA_TYPE,
+    FA_ADDRESS,
+    FA_CITY,
+    FA_STATE,
+    FA_ZIP,
+    FA_PHONE,
+    FA_FAX,
+    FA_NPI,
+    FA_BEDS,
+    FA_ACTIVE,
+    FA_INSERTDATE,
+    FA_LASTUPDATE,
+    FA_COMMENT,
+    FA_EIN,
+    FA_FAXVISITNOTE,
+    FA_GLCODE,
+    FA_HOSPICEINPATIENTENCOUNTERS,
+    FA_INCLUDEONCLAIMS,
+    FA_INPATIENTFACILITY,
+    FA_LATITUDE,
+    FA_LATLONGMETHOD,
+    FA_LIMITSMARTSCHEDULING,
+    FA_LONGITUDE,
+    FA_MEDICAIDNUMBER,
+    FA_OUTPATIENTTREATMENTPROVIDER,
+    FA_PARENTCOMPANY,
+    FA_PMID,
+    FA_REFERRINGFACILITY,
+    FA_RFTID,
+    FA_ROOMANDBOARDRATE,
+    FA_RRTID,
+    FA_SSN,
+    FA_STAFFINGFACILITY,
+    FA_STREET,
+    FA_TELEPHONE,
+    FA_VNWEB,
+    FA_WEBACCESS,
+    FA_ADDRESSMAPPED,
+    FA_DSMADDRESS,
+    FA_DSMNETWORK,
+    FA_FOCID,
+    _CDC_OP,
+    _CDC_TS,
+    INSERTED_DATE,
+    INSERTED_BY,
+    UPDATED_DATE
+FROM {{ source('HC_LANDING_HCHB', 'FACILITIES') }}
+
+WHERE FA_ID IS NOT NULL
+
+{% if is_incremental() %}
+AND INSERTED_DATE >
+(
+    SELECT COALESCE(MAX(INSERTED_DATE),'1900-01-01'::TIMESTAMP_NTZ)
+    FROM {{ this }}
+)
+{% endif %}
+
+QUALIFY ROW_NUMBER() OVER
+(
+    PARTITION BY FA_ID
+    ORDER BY INSERTED_DATE DESC
+)=1

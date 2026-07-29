@@ -1,0 +1,42 @@
+# ==================== Secrets — never commit these ====================
+.env
+.env.*
+!.env.example
+*.p8
+*.pem
+*.key
+rsa_key.pub
+*private-key*
+*private_key*
+
+# ==================== Terraform ====================
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+*.auto.tfvars
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+
+# ==================== dbt ====================
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt_packages/
+target/
+logs/
+
+# ==================== Python ====================
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ==================== Editors / OS ====================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
