@@ -1,12 +1,12 @@
 hchb_platform:
-  target: dev_snowflake
+  target: dev
 
   outputs:
 
     # ==========================================================
     # DEVELOPMENT
     # ==========================================================
-    dev_snowflake:
+    dev:
       type: snowflake
 
       account: ex52281.east-us.azure
@@ -52,7 +52,7 @@ hchb_platform:
     # # ==========================================================
     # # PRODUCTION
     # # ==========================================================
-    prod_snowflake:
+    prod:
       type: snowflake
 
       account: ex52281.east-us.azure
