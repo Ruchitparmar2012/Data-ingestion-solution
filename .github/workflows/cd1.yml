@@ -1,13 +1,12 @@
-name: CI2
+name: CD1
 
-# Run on every push and pull request, against whichever branch triggered it
+# Run on every push, deploying whichever branch triggered it
 on:
   push:
-  pull_request:
 
 env:
   # --- Snowflake connection details (placeholders) ---
-  SNOWFLAKE_ORG: "your_org"
+
   SNOWFLAKE_ACCOUNT: "RZ63409"
   SNOWFLAKE_USER: "TF_CICD_SVC"
   SNOWFLAKE_ROLE: "TF_CICD_ROLE"
@@ -25,7 +24,7 @@ env:
   # --- Terraform variables (map directly to terraform/variable.tf) ---
   # Terraform only reads input via TF_VAR_<name>; the SNOWFLAKE_* vars above
   # are not automatically visible to Terraform.
-  TF_VAR_snowflake_org: "your_org"
+
   TF_VAR_snowflake_account: "RZ63409"
   TF_VAR_snowflake_user: "TF_CICD_SVC"
   TF_VAR_warehouse: "COMPUTE_WH"
@@ -37,7 +36,7 @@ env:
   TF_VAR_user_private_key: ${{ runner.temp }}/snowflake_key.p8
 
 jobs:
-  ci:
+  cd:
     runs-on: ubuntu-latest
     steps:
       # 1. Check out the repository
@@ -60,10 +59,10 @@ jobs:
         working-directory: terraform
         run: terraform init
 
-      # 5. Run terraform plan
-      - name: Terraform plan
+      # 5. Apply infrastructure changes
+      - name: Terraform apply
         working-directory: terraform
-        run: terraform plan
+        run: terraform apply -auto-approve
 
       # 6. Set up Python
       - name: Set up Python
@@ -81,9 +80,9 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 8. Run dbt compile from within dbt/, using the venv created above
-      - name: dbt compile
+      # 8. Run dbt build from within dbt/, using the venv created above
+      - name: dbt build
         working-directory: dbt
         run: |
           source .venv/bin/activate
-          dbt compile
+          dbt build
