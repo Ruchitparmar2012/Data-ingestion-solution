@@ -17,7 +17,7 @@ env:
   ###################################################
   # Snowflake Configuration
   ###################################################
-
+  SNOWFLAKE_ORG: "MVAKLZD"
   SNOWFLAKE_ACCOUNT: "RZ63409"
   SNOWFLAKE_USER: "TF_CICD_SVC"
   SNOWFLAKE_ROLE: "TF_CICD_ROLE"
@@ -33,7 +33,7 @@ env:
   ###################################################
   # Terraform Variables
   ###################################################
-
+  TF_VAR_snowflake_org: "MVAKLZD"
   TF_VAR_snowflake_account: "RZ63409"
   TF_VAR_snowflake_user: "TF_CICD_SVC"
   TF_VAR_warehouse: "COMPUTE_WH"
