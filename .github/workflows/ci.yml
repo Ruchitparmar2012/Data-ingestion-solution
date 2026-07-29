@@ -7,7 +7,6 @@ on:
 
 env:
   # --- Snowflake connection details (placeholders) ---
-  SNOWFLAKE_ORG: "your_org"
   SNOWFLAKE_ACCOUNT: "RZ63409"
   SNOWFLAKE_USER: "TF_CICD_SVC"
   SNOWFLAKE_ROLE: "TF_CICD_ROLE"
@@ -16,7 +15,7 @@ env:
   SNOWFLAKE_SCHEMA: "PUBLIC"
   # Raw private key content comes from GitHub Secrets - the only secret used.
   # Used directly by dbt (profiles.yml reads it as PEM text).
-  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.rsa_key }}
+  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.RSA_KEY  }}
   # Passphrase for the encrypted private key (hardcoded placeholder)
   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: "MyStrongPassword690!"
   # profiles.yml lives inside dbt/, not the default ~/.dbt/
@@ -25,7 +24,6 @@ env:
   # --- Terraform variables (map directly to terraform/variable.tf) ---
   # Terraform only reads input via TF_VAR_<name>; the SNOWFLAKE_* vars above
   # are not automatically visible to Terraform.
-  TF_VAR_snowflake_org: "your_org"
   TF_VAR_snowflake_account: "RZ63409"
   TF_VAR_snowflake_user: "TF_CICD_SVC"
   TF_VAR_warehouse: "COMPUTE_WH"

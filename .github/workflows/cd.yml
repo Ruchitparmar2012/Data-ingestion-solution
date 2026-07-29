@@ -15,7 +15,7 @@ env:
   SNOWFLAKE_SCHEMA: "PUBLIC"
   # Raw private key content comes from GitHub Secrets - the only secret used.
   # Used directly by dbt (profiles.yml reads it as PEM text).
-  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.rsa_key }}
+  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.RSA_KEY  }}
   # Passphrase for the encrypted private key (hardcoded placeholder)
   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: "MyStrongPassword690!"
   # profiles.yml lives inside dbt/, not the default ~/.dbt/
