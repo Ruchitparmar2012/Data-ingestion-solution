@@ -1,4 +1,4 @@
-name: CD1
+name: CD
 
 # Run on every push, deploying whichever branch triggered it
 on:
