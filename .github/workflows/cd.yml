@@ -162,11 +162,39 @@ jobs:
           echo "DBT_CONSUMPTION_DB=${U}_HC_CONSUMPTION" >> "$GITHUB_ENV"
 
       - name: Install dependencies
-        run: pip install -r dbt/requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r dbt/requirements.txt
 
       - name: dbt deps
         working-directory: dbt
         run: dbt deps
+
+      - name: Create Temporary Snowflake Private Key
+        working-directory: dbt
+        shell: bash
+        run: |
+          cat <<'EOF' > sf_private_key.pem
+          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          EOF
+          chmod 600 sf_private_key.pem
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$(pwd)/sf_private_key.pem" >> "$GITHUB_ENV"
+
+      - name: Verify Private Key
+        working-directory: dbt
+        run: |
+          ls -la
+          test -f sf_private_key.pem
+
+      - name: Verify Profiles
+        working-directory: dbt
+        run: |
+          ls -la
+          test -f profiles.yml
+
+      - name: dbt debug
+        working-directory: dbt
+        run: dbt debug
 
       - name: dbt seed
         working-directory: dbt
@@ -206,3 +234,9 @@ jobs:
           name: dbt-docs-${{ needs.resolve-environment.outputs.environment }}
           path: dbt/target
           retention-days: 30
+
+      - name: Delete Private Key
+        if: always()
+        working-directory: dbt
+        shell: bash
+        run: rm -f sf_private_key.pem

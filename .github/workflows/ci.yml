@@ -64,6 +64,25 @@ jobs:
     name: SQLFluff Lint
     runs-on: ubuntu-latest
 
+    environment: dev
+
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}/dbt
+      DBT_TARGET: dev
+
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+
+      DBT_LANDING_DB: DEV_HC_LANDING
+      DBT_RAW_DB: DEV_HC_RAW
+      DBT_FUSION_DB: DEV_HC_FUSION
+      DBT_CONSUMPTION_DB: DEV_HC_CONSUMPTION
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -75,17 +94,63 @@ jobs:
           cache: pip
           cache-dependency-path: dbt/requirements.txt
 
-      - name: Install Python Dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r dbt/requirements.txt
+
+      - name: Create Temporary Snowflake Private Key
+        working-directory: dbt
+        shell: bash
+        run: |
+          cat <<'EOF' > sf_private_key.pem
+          ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+          EOF
+          chmod 600 sf_private_key.pem
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$(pwd)/sf_private_key.pem" >> $GITHUB_ENV
+
+      - name: Verify Private Key
+        working-directory: dbt
+        run: |
+          ls -la
+          test -f sf_private_key.pem
 
       - name: Install dbt Packages
         working-directory: dbt
         run: dbt deps
 
+      - name: Verify Profiles
+        working-directory: dbt
+        run: |
+          ls -la
+          test -f profiles.yml
+
+      - name: Verify Environment
+        shell: bash
+        run: |
+          echo "DBT_TARGET=$DBT_TARGET"
+          echo "DBT_PROFILES_DIR=$DBT_PROFILES_DIR"
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$SNOWFLAKE_PRIVATE_KEY_PATH"
+
+      - name: dbt Debug
+        working-directory: dbt
+        run: dbt debug
+
+      - name: dbt Parse
+        working-directory: dbt
+        run: dbt parse
+
+      - name: SQLFluff Version
+        run: sqlfluff --version
+
       - name: SQLFluff Lint
         run: sqlfluff lint dbt/models --nofail
+
+      - name: Delete Private Key
+        if: always()
+        working-directory: dbt
+        shell: bash
+        run: rm -f sf_private_key.pem
 
   ####################################################################
   # dbt Parse & Compile
