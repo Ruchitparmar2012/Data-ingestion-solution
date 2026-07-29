@@ -1,3 +1,148 @@
+# name: CI
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - develop
+
+#   pull_request:
+#     branches:
+#       - main
+#       - develop
+
+#   workflow_dispatch:
+
+# env:
+#   ###################################################
+#   # Snowflake Configuration
+#   ###################################################
+#   SNOWFLAKE_ORG: "MVAKLZD"
+#   SNOWFLAKE_ACCOUNT: "RZ63409"
+#   SNOWFLAKE_USER: "TF_CICD_SVC"
+#   SNOWFLAKE_ROLE: "TF_CICD_ROLE"
+#   SNOWFLAKE_WAREHOUSE: "COMPUTE_WH"
+#   SNOWFLAKE_DATABASE: "HC_LANDING"
+#   SNOWFLAKE_SCHEMA: "PUBLIC"
+
+#   SNOWFLAKE_PRIVATE_KEY: ${{ secrets.RSA_KEY }}
+#   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: "MyStrongPassword690!"
+
+#   DBT_PROFILES_DIR: dbt
+
+#   ###################################################
+#   # Terraform Variables
+#   ###################################################
+#   TF_VAR_snowflake_org: "MVAKLZD"
+#   TF_VAR_snowflake_account: "RZ63409"
+#   TF_VAR_snowflake_user: "TF_CICD_SVC"
+#   TF_VAR_warehouse: "COMPUTE_WH"
+#   TF_VAR_role: "TF_CICD_ROLE"
+#   TF_VAR_database: "HC_LANDING"
+#   TF_VAR_schema: "PUBLIC"
+#   TF_VAR_private_key_passphrase: "MyStrongPassword690!"
+#   TF_VAR_user_private_key: /tmp/snowflake_key.p8
+
+# jobs:
+
+#   ci:
+
+#     runs-on: ubuntu-latest
+
+#     steps:
+
+#       ###################################################
+#       # Checkout
+#       ###################################################
+
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+
+#       ###################################################
+#       # Snowflake Private Key
+#       ###################################################
+
+#       - name: Create Snowflake Private Key
+#         run: |
+#           printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > "$TF_VAR_user_private_key"
+#           chmod 600 "$TF_VAR_user_private_key"
+
+#       ###################################################
+#       # Terraform
+#       ###################################################
+
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.9.8"
+
+#       - name: Terraform Format Check
+#         working-directory: terraform
+#         run: terraform fmt -check -recursive
+
+#       - name: Terraform Init
+#         working-directory: terraform
+#         run: terraform init
+
+#       - name: Terraform Validate
+#         working-directory: terraform
+#         run: terraform validate
+
+#       - name: Terraform Plan
+#         working-directory: terraform
+#         run: terraform plan
+
+#       ###################################################
+#       # Python
+#       ###################################################
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.11"
+#           cache: pip
+#           cache-dependency-path: dbt/requirements.txt
+
+#       ###################################################
+#       # Install Python Packages
+#       ###################################################
+
+#       - name: Install Python Packages
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r dbt/requirements.txt
+
+#       ###################################################
+#       # dbt
+#       ###################################################
+
+#       - name: Install dbt Packages
+#         working-directory: dbt
+#         run: dbt deps
+
+#       - name: dbt Debug
+#         working-directory: dbt
+#         run: dbt debug
+
+#       - name: dbt Parse
+#         working-directory: dbt
+#         run: dbt parse
+
+#       - name: dbt Compile
+#         working-directory: dbt
+#         run: dbt compile
+
+#       ###################################################
+#       # Cleanup
+#       ###################################################
+
+#       - name: Remove Private Key
+#         if: always()
+#         run: rm -f "$TF_VAR_user_private_key"
+
+
+
+
 name: CI
 
 on:
@@ -17,6 +162,7 @@ env:
   ###################################################
   # Snowflake Configuration
   ###################################################
+
   SNOWFLAKE_ORG: "MVAKLZD"
   SNOWFLAKE_ACCOUNT: "RZ63409"
   SNOWFLAKE_USER: "TF_CICD_SVC"
@@ -28,11 +174,10 @@ env:
   SNOWFLAKE_PRIVATE_KEY: ${{ secrets.RSA_KEY }}
   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: "MyStrongPassword690!"
 
-  DBT_PROFILES_DIR: dbt
-
   ###################################################
   # Terraform Variables
   ###################################################
+
   TF_VAR_snowflake_org: "MVAKLZD"
   TF_VAR_snowflake_account: "RZ63409"
   TF_VAR_snowflake_user: "TF_CICD_SVC"
@@ -41,10 +186,9 @@ env:
   TF_VAR_database: "HC_LANDING"
   TF_VAR_schema: "PUBLIC"
   TF_VAR_private_key_passphrase: "MyStrongPassword690!"
-  TF_VAR_user_private_key: /tmp/snowflake_key.p8
+  TF_VAR_user_private_key: "/tmp/snowflake_key.p8"
 
 jobs:
-
   ci:
 
     runs-on: ubuntu-latest
@@ -59,13 +203,26 @@ jobs:
         uses: actions/checkout@v4
 
       ###################################################
-      # Snowflake Private Key
+      # Verify Repository Structure
+      ###################################################
+
+      - name: Verify Repository Structure
+        run: |
+          pwd
+          ls -la
+          echo "================ dbt ================="
+          ls -la dbt
+
+      ###################################################
+      # Create Snowflake Private Key
       ###################################################
 
       - name: Create Snowflake Private Key
         run: |
           printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > "$TF_VAR_user_private_key"
           chmod 600 "$TF_VAR_user_private_key"
+
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$TF_VAR_user_private_key" >> $GITHUB_ENV
 
       ###################################################
       # Terraform
@@ -104,7 +261,7 @@ jobs:
           cache-dependency-path: dbt/requirements.txt
 
       ###################################################
-      # Install Python Packages
+      # Install Dependencies
       ###################################################
 
       - name: Install Python Packages
@@ -113,24 +270,36 @@ jobs:
           pip install -r dbt/requirements.txt
 
       ###################################################
+      # Verify dbt files
+      ###################################################
+
+      - name: Verify dbt files
+        working-directory: dbt
+        run: |
+          pwd
+          ls -la
+          test -f profiles.yml && echo "profiles.yml found" || exit 1
+          test -f dbt_project.yml && echo "dbt_project.yml found" || exit 1
+
+      ###################################################
       # dbt
       ###################################################
 
       - name: Install dbt Packages
         working-directory: dbt
-        run: dbt deps
+        run: dbt deps --profiles-dir .
 
       - name: dbt Debug
         working-directory: dbt
-        run: dbt debug
+        run: dbt debug --profiles-dir .
 
       - name: dbt Parse
         working-directory: dbt
-        run: dbt parse
+        run: dbt parse --profiles-dir .
 
       - name: dbt Compile
         working-directory: dbt
-        run: dbt compile
+        run: dbt compile --profiles-dir .
 
       ###################################################
       # Cleanup
