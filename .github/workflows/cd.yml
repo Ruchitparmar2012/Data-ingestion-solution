@@ -20,7 +20,7 @@ env:
   SNOWFLAKE_PRIVATE_KEY: ${{ secrets.RSA_KEY }}
   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: "MyStrongPassword690!"
 
-  DBT_PROFILES_DIR: dbt
+  DBT_PROFILES_DIR: .
   TF_VAR_snowflake_org: "MVAKLZD"
   TF_VAR_snowflake_account: "RZ63409"
   TF_VAR_snowflake_user: "TF_CICD_SVC"
@@ -48,6 +48,8 @@ jobs:
         run: |
           printf '%s' "$SNOWFLAKE_PRIVATE_KEY" > "$TF_VAR_user_private_key"
           chmod 600 "$TF_VAR_user_private_key"
+
+          echo "SNOWFLAKE_PRIVATE_KEY_PATH=$TF_VAR_user_private_key" >> $GITHUB_ENV
 
       ###################################################
       # Terraform
@@ -96,15 +98,15 @@ jobs:
 
       - name: Install dbt Packages
         working-directory: dbt
-        run: dbt deps
+        run: dbt deps --profiles-dir .
 
       - name: dbt Debug
         working-directory: dbt
-        run: dbt debug
+        run: dbt debug --profiles-dir .
 
       - name: dbt Build
         working-directory: dbt
-        run: dbt build
+        run: dbt build --profiles-dir .
 
       ###################################################
       # Cleanup
