@@ -3,6 +3,7 @@ name: CD
 # Run on every push, deploying whichever branch triggered it
 on:
   push:
+  pull_request:
 
 env:
   # --- Snowflake connection details (placeholders) ---
