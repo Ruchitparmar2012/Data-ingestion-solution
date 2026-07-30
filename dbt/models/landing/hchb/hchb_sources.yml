@@ -7,5 +7,6 @@ sources:
     description: "Raw HCHB Bronze tables written by hchb_v12.py generator."
     tables:
        - name: BRANCHES
+       - name: PATIENT_INSURANCE
 
       
