@@ -29,4 +29,4 @@ SELECT
     CURRENT_USER()                                          AS INSERTED_BY,
     CURRENT_TIMESTAMP()::TIMESTAMP_NTZ                      AS UPDATED_DATE,
     CURRENT_USER()                                          AS UPDATED_BY
-FROM {{ source('STG_SILVER_HCHB', 'HCHB_BRANCHES_CLEANSED') }}
+FROM {{ ref('HC_FUSION_STG_SILVER_HCHB_BRANCHES_CLEANSED') }}
