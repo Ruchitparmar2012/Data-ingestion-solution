@@ -8,5 +8,5 @@ sources:
     tables:
        - name: BRANCHES
        - name: PATIENT_INSURANCE
-
+       - name: CLIENT_CONTACT_TYPES
       
