@@ -6,5 +6,8 @@ sources:
     schema: HCHB
     description: "Raw HCHB Bronze tables written by hchb_v12.py generator."
     tables:
-    - name: BRANCHES
-    - name: VISIT
+      - name: BRANCHES
+        identifier: BRANCHES
+
+      - name: VISIT
+        identifier: VISIT

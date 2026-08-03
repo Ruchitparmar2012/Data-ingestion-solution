@@ -3,9 +3,9 @@ version: 2
 sources:
   - name: SILVER_HCHB
     database: HC_FUSION
-    schema: SILVER 
+    schema: SILVER
     tables:
       - name: TBL_DIM_BRANCH
-        identifier: TBL_DIM_BRANCH 
-     - name: TBL_DIM_VISIT
+        identifier: TBL_DIM_BRANCH
+      - name: TBL_DIM_VISIT
         identifier: TBL_DIM_VISIT
