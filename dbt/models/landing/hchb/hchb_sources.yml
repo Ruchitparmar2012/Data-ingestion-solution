@@ -6,9 +6,17 @@ sources:
     schema: HCHB
     description: "Raw HCHB Bronze tables written by hchb_v12.py generator."
     tables:
-       - name: BRANCHES
-       - name: PATIENT_INSURANCE
-       - name: CLIENT_CONTACT_TYPES
-       - name: EMP
-       - name: VISIT
-      
+      - name: BRANCHES
+        identifier: BRANCHES
+
+      - name: PATIENT_INSURANCE
+        identifier: PATIENT_INSURANCE
+
+      - name: CLIENT_CONTACT_TYPES
+        identifier: CLIENT_CONTACT_TYPES
+
+      - name: EMP
+        identifier: EMP
+
+      - name: VISIT
+        identifier: VISIT
