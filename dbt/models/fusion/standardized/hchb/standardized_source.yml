@@ -7,4 +7,5 @@ sources:
     tables:
       - name: TBL_DIM_BRANCH_HCHB
         identifier: TBL_DIM_BRANCH_HCHB
-          
+      - name: TBL_DIM_VISIT_HCHB
+        identifier: TBL_DIM_VISIT_HCHB
