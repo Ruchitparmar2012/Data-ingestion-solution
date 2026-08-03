@@ -7,5 +7,5 @@ sources:
     tables:
       - name: HCHB_BRANCHES_CLEANSED
         identifier: HCHB_BRANCHES_CLEANSED
-      - name: HCHB_VISIT_CLEANSED 
+      - name: HCHB_VISIT_CLEANSED
         identifier: HCHB_VISIT_CLEANSED
