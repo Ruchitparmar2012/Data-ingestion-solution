@@ -1,4 +1,4 @@
-resource "snowflake_table" "HC_LANDING_HCHB_VISIT" { 
+resource "snowflake_table" "HC_LANDING_HCHB_VISIT" {
   database = var.database
   schema   = var.schema
   name     = "VISIT"
